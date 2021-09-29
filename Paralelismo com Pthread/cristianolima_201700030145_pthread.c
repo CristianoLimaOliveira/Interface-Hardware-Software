@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <stdbool.h>
 
 #define NUM_THREADS 4
 
@@ -38,7 +39,8 @@ void * multiplicaVetores(void *args){
         resul += ptrDados->ptrMatriz1[ptrDados->indicaLinhaMatriz1 * ptrDados->quantidadeDeColunasMatriz1 + j] * ptrDados->ptrMatriz2[ptrDados->indicaColunaMatriz2 + j * ptrDados->quantidadeDeColunasMatriz2];
     }
 
-    ptrDados->ptrMatrizResultante[ptrDados->quantidadeDeLinhasMatriz1 * ptrDados->indicaColunaMatriz2 + ptrDados->indicaLinhaMatriz1]=resul;
+    /*ptrDados->ptrMatrizResultante[ptrDados->quantidadeDeLinhasMatriz1 * ptrDados->indicaColunaMatriz2 + ptrDados->indicaLinhaMatriz1]=resul;*/
+    ptrDados->ptrMatrizResultante[ptrDados->quantidadeDeColunasMatriz2 * ptrDados->indicaLinhaMatriz1 + ptrDados->indicaColunaMatriz2]=resul;
     printf("%lu %lu %lf\n\n", ptrDados->indicaLinhaMatriz1, ptrDados->indicaColunaMatriz2, resul);
 
     return 0;
@@ -47,9 +49,10 @@ void * multiplicaVetores(void *args){
 int main(int argc, char *argv[]){
     uint64_t quantidadeDeMultiplicacoes, quantidadeDeLinhasMatriz1, quantidadeDeLinhasMatriz2, quantidadeDeColunasMatriz1, quantidadeDeColunasMatriz2, quantidadeDeElementosMatriz1, quantidadeDeElementosMatriz2, quantidadeDeElementosMatrizResultante;
     double *ptrMatriz1=NULL, *ptrMatriz2=NULL, *ptrMatrizResultante=NULL;
-    uint32_t indexArrayDados;
+    uint32_t indexArrayDados, indexThread, indexDados, contadorFormatador;
     struct estruturaPorThread *ptrDados=NULL;
     pthread_t threads[NUM_THREADS];
+    bool fim=false;
 
     printf("%s\n%s\n", argv[1], argv[2]);
 
@@ -68,7 +71,7 @@ int main(int argc, char *argv[]){
 
         for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeElementosMatriz1; contadorSegundoFor++){
             fscanf(fp_input, "%lf", &ptrMatriz1[contadorSegundoFor]);
-            fprintf(fp_output, "%lf ", ptrMatriz1[contadorSegundoFor]);
+            printf("%lf ", ptrMatriz1[contadorSegundoFor]);
         }
 
         fscanf(fp_input, "%lu", &quantidadeDeLinhasMatriz2);
@@ -77,12 +80,12 @@ int main(int argc, char *argv[]){
         quantidadeDeElementosMatriz2 = quantidadeDeLinhasMatriz2 * quantidadeDeColunasMatriz2;
         ptrMatriz2 = malloc(quantidadeDeElementosMatriz2 * sizeof(double));
 
-        fprintf(fp_output, "\n");
+        printf("\n");
         for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeElementosMatriz1; contadorSegundoFor++){
             fscanf(fp_input, "%lf", &ptrMatriz2[contadorSegundoFor]);
-            fprintf(fp_output, "%lf ", ptrMatriz2[contadorSegundoFor]);
+            printf("%lf ", ptrMatriz2[contadorSegundoFor]);
         }
-        fprintf(fp_output, "\n");
+        printf("\n");
 
         quantidadeDeElementosMatrizResultante = quantidadeDeLinhasMatriz1 * quantidadeDeColunasMatriz2;
         ptrMatrizResultante = malloc(quantidadeDeElementosMatrizResultante * sizeof(double));
@@ -107,19 +110,49 @@ int main(int argc, char *argv[]){
         /*for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeElementosMatrizResultante; contadorSegundoFor++){
             printf("%u %lu %lu %lu %lu %u %u\n", contadorSegundoFor, ptrDados[contadorSegundoFor].quantidadeDeLinhasMatriz1, ptrDados[contadorSegundoFor].quantidadeDeColunasMatriz1, ptrDados[contadorSegundoFor].quantidadeDeLinhasMatriz2, ptrDados[contadorSegundoFor].quantidadeDeColunasMatriz2, ptrDados[contadorSegundoFor].indicaLinhaMatriz1, ptrDados[contadorSegundoFor].indicaColunaMatriz2);
         }*/
+        indexThread = 0;
+        indexDados = 0;
+        while(!fim){
+            while(indexThread<4 && indexDados<quantidadeDeElementosMatrizResultante){
+                pthread_create(&threads[indexThread], NULL, multiplicaVetores, (void *)(&ptrDados[indexDados]));
+                indexThread += 1;
+                indexDados += 1;
+            }
 
-        pthread_create(&threads[0], NULL, multiplicaVetores, (void *)(&ptrDados[0]));
+            while(indexThread>0){
+                pthread_join(threads[indexThread-1], NULL);
+                indexThread-=1;
+            }
+
+            if(indexDados==quantidadeDeElementosMatrizResultante){
+                fim=true;
+            }
+        }
+        fim=false;
+
+        printf("saí\n");
+        /*pthread_create(&threads[0], NULL, multiplicaVetores, (void *)(&ptrDados[0]));
         pthread_create(&threads[1], NULL, multiplicaVetores, (void *)(&ptrDados[1]));
         pthread_create(&threads[2], NULL, multiplicaVetores, (void *)(&ptrDados[2]));
         pthread_create(&threads[3], NULL, multiplicaVetores, (void *)(&ptrDados[3]));
         pthread_join(threads[0], NULL);
         pthread_join(threads[1], NULL);
         pthread_join(threads[2], NULL);
-        pthread_join(threads[3], NULL);
+        pthread_join(threads[3], NULL);*/
 
+        contadorFormatador = 0;
+        fprintf(fp_output,"M%u:\n", contadorPrimeiroFor);
         for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeElementosMatrizResultante; contadorSegundoFor++){
-            printf("%lf ", ptrDados[0].ptrMatrizResultante[contadorSegundoFor]);
+            if(contadorFormatador<quantidadeDeColunasMatriz2-1){
+                fprintf(fp_output," %.2lf", ptrDados[0].ptrMatrizResultante[contadorSegundoFor]);
+                contadorFormatador += 1;
+            }else{
+                fprintf(fp_output," %.2lf\n", ptrDados[0].ptrMatrizResultante[contadorSegundoFor]);
+                contadorFormatador = 0;
+            }
+            
         }
+        printf("\n\n");
 
         free(ptrMatriz1);
         free(ptrMatriz2);
