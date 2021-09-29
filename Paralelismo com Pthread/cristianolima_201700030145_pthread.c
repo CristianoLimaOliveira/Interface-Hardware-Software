@@ -20,30 +20,30 @@ void * multiplicaVetores(void *args){
     uint32_t *seletor = (uint32_t *)(args);
 
     if(*seletor == 1){
-        for (uint32_t i = 0; i < quantidadeDeLinhasMatriz1; i++)
+        for (uint32_t i = 0; i < delimitadorBloco1; i++)
             for (uint32_t j = 0; j < quantidadeDeColunasMatriz2; j++)
-                for (uint32_t k = 0; k < delimitadorBloco1; k++){
+                for (uint32_t k = 0; k < quantidadeDeColunasMatriz1; k++){
                     ptrMatrizResultante[i*quantidadeDeColunasMatriz2+j] += ptrMatriz1[ i*quantidadeDeColunasMatriz1+k ] * ptrMatriz2[ k*quantidadeDeColunasMatriz2+j ];
                 }
     }
     if(*seletor == 2){
-        for (uint32_t i = 0; i < quantidadeDeLinhasMatriz1; i++)
+        for (uint32_t i = delimitadorBloco1; i < delimitadorBloco2; i++)
             for (uint32_t j = 0; j < quantidadeDeColunasMatriz2; j++)
-                for (uint32_t k = delimitadorBloco1; k < delimitadorBloco2; k++){
+                for (uint32_t k = 0; k < quantidadeDeColunasMatriz1; k++){
                     ptrMatrizResultante[i*quantidadeDeColunasMatriz2+j] += ptrMatriz1[ i*quantidadeDeColunasMatriz1+k ] * ptrMatriz2[ k*quantidadeDeColunasMatriz2+j ];
                 }
     }
     if(*seletor == 3){
-        for (uint32_t i = 0; i < quantidadeDeLinhasMatriz1; i++)
+        for (uint32_t i = delimitadorBloco2; i < delimitadorBloco3; i++)
             for (uint32_t j = 0; j < quantidadeDeColunasMatriz2; j++)
-                for (uint32_t k = delimitadorBloco2; k < delimitadorBloco3; k++){
+                for (uint32_t k = 0; k < quantidadeDeColunasMatriz1; k++){
                     ptrMatrizResultante[i*quantidadeDeColunasMatriz2+j] += ptrMatriz1[ i*quantidadeDeColunasMatriz1+k ] * ptrMatriz2[ k*quantidadeDeColunasMatriz2+j ];
                 }
     }
     if(*seletor == 4){
-        for (uint32_t i = 0; i < quantidadeDeLinhasMatriz1; i++)
+        for (uint32_t i = delimitadorBloco3; i < quantidadeDeLinhasMatriz1; i++)
             for (uint32_t j = 0; j < quantidadeDeColunasMatriz2; j++)
-                for (uint32_t k = delimitadorBloco3; k < quantidadeDeColunasMatriz1; k++){
+                for (uint32_t k = 0; k < quantidadeDeColunasMatriz1; k++){
                     ptrMatrizResultante[i*quantidadeDeColunasMatriz2+j] += ptrMatriz1[ i*quantidadeDeColunasMatriz1+k ] * ptrMatriz2[ k*quantidadeDeColunasMatriz2+j ];
                 }
     }
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]){
         quantidadeDeElementosMatrizResultante = quantidadeDeLinhasMatriz1 * quantidadeDeColunasMatriz2;
         ptrMatrizResultante =(float*) calloc(quantidadeDeElementosMatrizResultante, sizeof(float));
 
-        tamanhoDeBlocosPorThread = (uint32_t)(quantidadeDeColunasMatriz1/4);
+        tamanhoDeBlocosPorThread = (uint32_t)(quantidadeDeLinhasMatriz1/4);
         delimitadorBloco1 = tamanhoDeBlocosPorThread;
         delimitadorBloco2 = 2*tamanhoDeBlocosPorThread;
         delimitadorBloco3 = 3*tamanhoDeBlocosPorThread;
