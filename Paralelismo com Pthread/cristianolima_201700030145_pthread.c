@@ -14,35 +14,58 @@ uint32_t quantidadeDeColunasMatriz2;
 float *ptrMatriz1;
 float *ptrMatriz2;
 float *ptrMatrizResultante;
-uint32_t passo=0;
+uint32_t delimitadorBloco1, delimitadorBloco2, delimitadorBloco3;
 
 void * multiplicaVetores(void *args){
-    uint32_t i = passo++;
+    uint32_t *seletor = (uint32_t *)(args);
 
-    for (uint32_t j = 0; j < quantidadeDeColunasMatriz2; j++)
-        for (uint32_t k = 0; k < quantidadeDeColunasMatriz1; k++){
-            ptrMatrizResultante[i*quantidadeDeColunasMatriz2+j] += ptrMatriz1[ i*quantidadeDeColunasMatriz1+k ] * ptrMatriz2[ k*quantidadeDeColunasMatriz2+j ];
-        }
-    return 0;
+    if(*seletor == 1){
+        for (uint32_t i = 0; i < quantidadeDeLinhasMatriz1; i++)
+            for (uint32_t j = 0; j < quantidadeDeColunasMatriz2; j++)
+                for (uint32_t k = 0; k < delimitadorBloco1; k++){
+                    ptrMatrizResultante[i*quantidadeDeColunasMatriz2+j] += ptrMatriz1[ i*quantidadeDeColunasMatriz1+k ] * ptrMatriz2[ k*quantidadeDeColunasMatriz2+j ];
+                }
+    }
+    if(*seletor == 2){
+        for (uint32_t i = 0; i < quantidadeDeLinhasMatriz1; i++)
+            for (uint32_t j = 0; j < quantidadeDeColunasMatriz2; j++)
+                for (uint32_t k = delimitadorBloco1; k < delimitadorBloco2; k++){
+                    ptrMatrizResultante[i*quantidadeDeColunasMatriz2+j] += ptrMatriz1[ i*quantidadeDeColunasMatriz1+k ] * ptrMatriz2[ k*quantidadeDeColunasMatriz2+j ];
+                }
+    }
+    if(*seletor == 3){
+        for (uint32_t i = 0; i < quantidadeDeLinhasMatriz1; i++)
+            for (uint32_t j = 0; j < quantidadeDeColunasMatriz2; j++)
+                for (uint32_t k = delimitadorBloco2; k < delimitadorBloco3; k++){
+                    ptrMatrizResultante[i*quantidadeDeColunasMatriz2+j] += ptrMatriz1[ i*quantidadeDeColunasMatriz1+k ] * ptrMatriz2[ k*quantidadeDeColunasMatriz2+j ];
+                }
+    }
+    if(*seletor == 4){
+        for (uint32_t i = 0; i < quantidadeDeLinhasMatriz1; i++)
+            for (uint32_t j = 0; j < quantidadeDeColunasMatriz2; j++)
+                for (uint32_t k = delimitadorBloco3; k < quantidadeDeColunasMatriz1; k++){
+                    ptrMatrizResultante[i*quantidadeDeColunasMatriz2+j] += ptrMatriz1[ i*quantidadeDeColunasMatriz1+k ] * ptrMatriz2[ k*quantidadeDeColunasMatriz2+j ];
+                }
+    }
+    pthread_exit(0);
 }
 
 int main(int argc, char *argv[]){
-    uint32_t quantidadeDeMultiplicacoes, quantidadeDeElementosMatriz1, quantidadeDeElementosMatriz2, quantidadeDeElementosMatrizResultante;
-    uint32_t indexThread, indexDados, contadorFormatador;
+    uint32_t quantidadeDeMultiplicacoes, quantidadeDeElementosMatriz1, quantidadeDeElementosMatriz2, quantidadeDeElementosMatrizResultante, tamanhoDeBlocosPorThread;
+    uint32_t contadorFormatador, blocoThread1=1, blocoThread2=2, blocoThread3=3, blocoThread4=4;
     pthread_t threads[NUM_THREADS];
-    bool fim=false;
 
     FILE* fp_input = fopen( argv[1], "r" );
     FILE* fp_output = fopen( argv[2], "w" );
 
     fscanf(fp_input, "%u", &quantidadeDeMultiplicacoes);
-    
+
     for(uint32_t contadorPrimeiroFor = 0; contadorPrimeiroFor < quantidadeDeMultiplicacoes; contadorPrimeiroFor++){
         fscanf(fp_input, "%u", &quantidadeDeLinhasMatriz1);
         fscanf(fp_input, "%u", &quantidadeDeColunasMatriz1);
-        
+
         quantidadeDeElementosMatriz1 = quantidadeDeLinhasMatriz1 * quantidadeDeColunasMatriz1;
-        ptrMatriz1 = malloc(quantidadeDeElementosMatriz1 * sizeof(float));
+        ptrMatriz1 = (float*) malloc(quantidadeDeElementosMatriz1 * sizeof(float));
 
         for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeElementosMatriz1; contadorSegundoFor++){
             fscanf(fp_input, "%f", &ptrMatriz1[contadorSegundoFor]);
@@ -52,34 +75,27 @@ int main(int argc, char *argv[]){
         fscanf(fp_input, "%u", &quantidadeDeColunasMatriz2);
 
         quantidadeDeElementosMatriz2 = quantidadeDeLinhasMatriz2 * quantidadeDeColunasMatriz2;
-        ptrMatriz2 = malloc(quantidadeDeElementosMatriz2 * sizeof(float));
+        ptrMatriz2 = (float*) malloc(quantidadeDeElementosMatriz2 * sizeof(float));
 
         for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeElementosMatriz2; contadorSegundoFor++){
             fscanf(fp_input, "%f", &ptrMatriz2[contadorSegundoFor]);
         }
 
         quantidadeDeElementosMatrizResultante = quantidadeDeLinhasMatriz1 * quantidadeDeColunasMatriz2;
-        ptrMatrizResultante = malloc(quantidadeDeElementosMatrizResultante * sizeof(float));
+        ptrMatrizResultante =(float*) calloc(quantidadeDeElementosMatrizResultante, sizeof(float));
 
-        indexThread = 0;
-        indexDados = 0;
-        while(!fim){
-            while(indexThread<NUM_THREADS && indexDados<quantidadeDeLinhasMatriz1){
-                pthread_create(&threads[indexThread], NULL, multiplicaVetores, NULL);
-                indexThread += 1;
-                indexDados += 1;
-            }
-
-            while(indexThread>0){
-                pthread_join(threads[indexThread-1], NULL);
-                indexThread-=1;
-            }
-
-            if(indexDados==quantidadeDeLinhasMatriz1){
-                fim=true;
-            }
-        }
-        fim=false;
+        tamanhoDeBlocosPorThread = (uint32_t)(quantidadeDeColunasMatriz1/4);
+        delimitadorBloco1 = tamanhoDeBlocosPorThread;
+        delimitadorBloco2 = 2*tamanhoDeBlocosPorThread;
+        delimitadorBloco3 = 3*tamanhoDeBlocosPorThread;
+        pthread_create(&threads[0], NULL, multiplicaVetores, (void *)(&blocoThread1));
+        pthread_create(&threads[1], NULL, multiplicaVetores, (void *)(&blocoThread2));
+        pthread_create(&threads[2], NULL, multiplicaVetores, (void *)(&blocoThread3));
+        pthread_create(&threads[3], NULL, multiplicaVetores, (void *)(&blocoThread4));
+        pthread_join(threads[0], NULL);
+        pthread_join(threads[1], NULL);
+        pthread_join(threads[2], NULL);
+        pthread_join(threads[3], NULL);
 
         contadorFormatador = 0;
         fprintf(fp_output,"M%u:\n", contadorPrimeiroFor);
@@ -99,7 +115,6 @@ int main(int argc, char *argv[]){
         ptrMatriz1=NULL;
         ptrMatriz2=NULL;
         ptrMatrizResultante=NULL;
-        passo=0;
     }
 
     fclose(fp_input);
