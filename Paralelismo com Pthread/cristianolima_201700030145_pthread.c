@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <pthread.h>
 
+#define NUM_THREADS 4
+
 struct estruturaPorThread
 {
     uint64_t quantidadeDeLinhasMatriz1;
@@ -12,8 +14,8 @@ struct estruturaPorThread
     double *ptrMatriz1;
     double *ptrMatriz2;
     double *ptrMatrizResultante;
-    uint32_t indicaLinhaMatriz1;
-    uint32_t indicaColunaMatriz2;
+    uint64_t indicaLinhaMatriz1;
+    uint64_t indicaColunaMatriz2;
 };
 
 /* ESBOÇO
@@ -28,11 +30,26 @@ void multiplicaVetores(int indicaLinhaMatriz1, int indicaColunaMatriz2, int quan
     ptrMatrizResultante[quantidadeDeLinhasMatriz1 * indicaColunaMatriz2 + indicaLinhaMatriz1]=resul;
 }*/
 
+void * multiplicaVetores(void *args){
+    struct estruturaPorThread *ptrDados = (struct estruturaPorThread *)(args);
+
+    double resul = 0;
+    for(uint64_t j=0; j < ptrDados->quantidadeDeLinhasMatriz2; j++){
+        resul += ptrDados->ptrMatriz1[ptrDados->indicaLinhaMatriz1 * ptrDados->quantidadeDeColunasMatriz1 + j] * ptrDados->ptrMatriz2[ptrDados->indicaColunaMatriz2 + j * ptrDados->quantidadeDeColunasMatriz2];
+    }
+
+    ptrDados->ptrMatrizResultante[ptrDados->quantidadeDeLinhasMatriz1 * ptrDados->indicaColunaMatriz2 + ptrDados->indicaLinhaMatriz1]=resul;
+    printf("%lu %lu %lf\n\n", ptrDados->indicaLinhaMatriz1, ptrDados->indicaColunaMatriz2, resul);
+
+    return 0;
+}
+
 int main(int argc, char *argv[]){
     uint64_t quantidadeDeMultiplicacoes, quantidadeDeLinhasMatriz1, quantidadeDeLinhasMatriz2, quantidadeDeColunasMatriz1, quantidadeDeColunasMatriz2, quantidadeDeElementosMatriz1, quantidadeDeElementosMatriz2, quantidadeDeElementosMatrizResultante;
     double *ptrMatriz1=NULL, *ptrMatriz2=NULL, *ptrMatrizResultante=NULL;
     uint32_t indexArrayDados;
     struct estruturaPorThread *ptrDados=NULL;
+    pthread_t threads[NUM_THREADS];
 
     printf("%s\n%s\n", argv[1], argv[2]);
 
@@ -72,8 +89,8 @@ int main(int argc, char *argv[]){
         ptrDados = malloc(quantidadeDeElementosMatrizResultante * sizeof(struct estruturaPorThread));
 
         indexArrayDados = 0;
-        for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeColunasMatriz2; contadorSegundoFor++){
-            for(uint32_t contadorTerceiroFor = 0; contadorTerceiroFor < quantidadeDeLinhasMatriz1; contadorTerceiroFor++){
+        for(uint64_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeColunasMatriz2; contadorSegundoFor++){
+            for(uint64_t contadorTerceiroFor = 0; contadorTerceiroFor < quantidadeDeLinhasMatriz1; contadorTerceiroFor++){
                 ptrDados[indexArrayDados].quantidadeDeLinhasMatriz1 = quantidadeDeLinhasMatriz1;
                 ptrDados[indexArrayDados].quantidadeDeColunasMatriz1 = quantidadeDeColunasMatriz1;
                 ptrDados[indexArrayDados].quantidadeDeLinhasMatriz2 = quantidadeDeLinhasMatriz2;
@@ -87,10 +104,22 @@ int main(int argc, char *argv[]){
             }
         }
 
-        for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeElementosMatrizResultante; contadorSegundoFor++){
+        /*for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeElementosMatrizResultante; contadorSegundoFor++){
             printf("%u %lu %lu %lu %lu %u %u\n", contadorSegundoFor, ptrDados[contadorSegundoFor].quantidadeDeLinhasMatriz1, ptrDados[contadorSegundoFor].quantidadeDeColunasMatriz1, ptrDados[contadorSegundoFor].quantidadeDeLinhasMatriz2, ptrDados[contadorSegundoFor].quantidadeDeColunasMatriz2, ptrDados[contadorSegundoFor].indicaLinhaMatriz1, ptrDados[contadorSegundoFor].indicaColunaMatriz2);
+        }*/
+
+        pthread_create(&threads[0], NULL, multiplicaVetores, (void *)(&ptrDados[0]));
+        pthread_create(&threads[1], NULL, multiplicaVetores, (void *)(&ptrDados[1]));
+        pthread_create(&threads[2], NULL, multiplicaVetores, (void *)(&ptrDados[2]));
+        pthread_create(&threads[3], NULL, multiplicaVetores, (void *)(&ptrDados[3]));
+        pthread_join(threads[0], NULL);
+        pthread_join(threads[1], NULL);
+        pthread_join(threads[2], NULL);
+        pthread_join(threads[3], NULL);
+
+        for(uint32_t contadorSegundoFor = 0; contadorSegundoFor < quantidadeDeElementosMatrizResultante; contadorSegundoFor++){
+            printf("%lf ", ptrDados[0].ptrMatrizResultante[contadorSegundoFor]);
         }
-        
 
         free(ptrMatriz1);
         free(ptrMatriz2);
