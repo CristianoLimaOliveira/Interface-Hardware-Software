@@ -1,0 +1,15 @@
+Sobre instruções xor, and, or, etc.: https://www.ic.unicamp.br/~pannain/mc404/aulas/pdfs/OBCLM6.pdf
+
+Sobre os registradores: https://prlalmeida.com.br/microprocessadores2020-01/Aula11.pdf
+
+Sobre interrupções: https://pt.wikibooks.org/wiki/Programar_em_Assembly_com_GAS/Entrada_e_Sa%C3%ADda_(E/S)
+
+Acessando locais na memória com base no registrador RBP: https://stackoverflow.com/questions/42215105/understanding-rip-register-in-intel-assembly
+
+Instruções assembly AMD64: https://www.felixcloutier.com/x86/
+
+Livro sobre AMD64 no ubuntu: http://www.egr.unlv.edu/~ed/assembly64.pdf
+
+Usando scanf no assembly: https://stackoverflow.com/questions/27095286/using-scanf-with-x86-64-gas-assembly
+
+Introdução ao ADM64 Assembly através do site da intel: https://software.intel.com/content/www/us/en/develop/articles/introduction-to-x64-assembly.html
